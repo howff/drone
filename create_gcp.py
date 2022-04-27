@@ -30,11 +30,8 @@ import subprocess
 import sys
 
 # Variables
-#mp4_filename = sys.argv[1]
 mp4_filename = '/mnt/hgfs/Downloads/Drone/Frames/DJI_0185.MP4'
-#csv_filename = sys.argv[2]
 csv_filename = '/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-13_[15-20-46].csv'
-gcp_filename = os.path.join(os.path.dirname(mp4_filename), 'gcp_list.txt')
 
 # Constants
 projection = 'EPSG:4326'
@@ -123,6 +120,7 @@ def field_of_view(altitude):
 
 def index_of_nearest(mylist, findme):
     idx = bisect.bisect_left(mylist, findme)
+    if idx == len(mylist): idx -= 1
     if mylist[idx] == findme:
         return idx
     if idx == 0: idx = 1
@@ -204,6 +202,11 @@ def gcp_append(png_filename, lat, lon, height, x, y):
 if __name__ == '__main__':
 
     logging.basicConfig(level = logging.INFO)
+    if len(sys.argv) > 1:
+        mp4_filename = sys.argv[1]
+    if len(sys.argv) > 2:
+        csv_filename = sys.argv[2]
+    gcp_filename = os.path.join(os.path.dirname(mp4_filename), 'gcp_list.txt')
 
     # 1. Find a PNG file and get its dimensions, used later to calculate FOV
     png_filename = find_png_filename(mp4_filename)
