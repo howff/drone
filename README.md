@@ -35,16 +35,6 @@ Extract images, rate of one per second:
 extract_from_video.sh /mnt/hgfs/Downloads/Drone/Frames/DJI_0185.mp4
 ```
 
-```
-srt_to_gcp.py /mnt/hgfs/Downloads/Drone/Frames/DJI_0185.srt /mnt/hgfs/Downloads/Drone/Frames/DJI_0185_0001.png
-./srt_to_gcp.py /mnt/hgfs/Downloads/Drone/Frames/DJI_0185.srt /mnt/hgfs/Downloads/Drone/Frames/DJI_0185_0001.png /mnt/hgfs/Downloads/Drone/Frames/DJI_0185 > /mnt/hgfs/Downloads/Drone/Frames/gcp_list.txt
-./srt_to_gcp.py /mnt/hgfs/Downloads/Drone/Frames/DJI_0185 /mnt/hgfs/Downloads/Drone/Frames/DJI_0185.srt
-```
-
-```
-gpx_to_gcp.py
-```
-
 Create a gcp_list.txt file by reading the MP4 along with the CSV.
 Also needs to read one PNG file to determine its dimensions.
 The gcp file will contain one line for each useful image; the other images can be removed.
@@ -52,3 +42,19 @@ The gcp file will contain one line for each useful image; the other images can b
 create_gcp.py DJI_nnnn.MP4 DJIFlightRecord_xxx.csv
 ```
 
+For example
+
+```
+./extract_from_video.sh /mnt/hgfs/Downloads/Drone/SourceCopies/DJI_0185.MP4 /mnt/hgfs/Downloads/Drone/Frames
+./extract_from_video.sh /mnt/hgfs/Downloads/Drone/SourceCopies/DJI_0186.MP4 /mnt/hgfs/Downloads/Drone/Frames
+./extract_from_video.sh /mnt/hgfs/Downloads/Drone/SourceCopies/DJI_0187.MP4 /mnt/hgfs/Downloads/Drone/Frames
+
+./create_gcp.py "/mnt/hgfs/Downloads/Drone/Frames/DJI_0185.MP4" \
+        "/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-13_[15-20-46].csv"
+
+./create_gcp.py "/mnt/hgfs/Downloads/Drone/Frames/DJI_0186.MP4" \
+        "/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-13_[15-20-46].csv"
+
+./create_gcp.py "/mnt/hgfs/Downloads/Drone/Frames/DJI_0187.MP4" \
+        "/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-13_[15-20-46].csv"
+```
