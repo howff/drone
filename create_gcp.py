@@ -24,6 +24,7 @@ import logging
 from math import cos, tan, radians, sqrt
 import os
 import png
+from PIL import Image
 import pprint
 import re
 import subprocess
@@ -32,6 +33,8 @@ import sys
 # Variables
 mp4_filename = '/mnt/hgfs/Downloads/Drone/Frames/DJI_0185.MP4'
 csv_filename = '/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-13_[15-20-46].csv'
+output_dir = '/mnt/hgfs/Downloads/Drone/FramesJPEG'
+convert_to_jpeg = True # OpenDroneMap needs JPEG not PNG
 
 # Constants
 projection = 'EPSG:4326'
@@ -61,6 +64,7 @@ def find_png_filename(mp4file):
     return None
 
 
+# ---------------------------------------------------------------------
 def png_dimensions(png_filename):
     """ Extract the width and height from a PNG file
     """
@@ -69,6 +73,7 @@ def png_dimensions(png_filename):
     return width, height
 
 
+# ---------------------------------------------------------------------
 def mp4_creation_time(mp4_filename):
     """ Extract the creation_time from a MP4 video file
     """
@@ -82,6 +87,7 @@ def mp4_creation_time(mp4_filename):
     return datetime
 
 
+# ---------------------------------------------------------------------
 def read_gpx(gpx_filename):
     """ Read a GPX file
     """
@@ -94,6 +100,7 @@ def read_gpx(gpx_filename):
                     print('Point at ({0},{1}) -> {2}'.format(point.latitude, point.longitude, point.elevation))
 
 
+# ---------------------------------------------------------------------
 def read_srt(srt_filename):
     """ Read the SRT subtitle file extracted by ffmpeg from a DJI drone video
     """
@@ -109,6 +116,7 @@ def read_srt(srt_filename):
                 altitude = float(m[m.index('H')+1])
 
 
+# ---------------------------------------------------------------------
 def field_of_view(altitude):
     """ Return the FOV field of view for a given altitude
     assuming a sensor having angle (degrees) FOV_ACROSS x FOV_ALONG
@@ -118,6 +126,7 @@ def field_of_view(altitude):
     return fov_w, fov_h
 
 
+# ---------------------------------------------------------------------
 def index_of_nearest(mylist, findme):
     idx = bisect.bisect_left(mylist, findme)
     if idx == len(mylist): idx -= 1
@@ -176,6 +185,7 @@ def read_csv(csv_filename):
     #print('%d' % index_of_nearest(csv_time, findtime))
 
 
+# ---------------------------------------------------------------------
 def gcp_header():
     """ Create a gcp file and write the header.
     This is just a fixed latlon projection line.
@@ -193,12 +203,30 @@ def gcp_append(png_filename, lat, lon, height, x, y):
     Create the file with a header if it doesn't exist.
     """
     gcp_header()
+    filename = os.path.basename(png_filename)
+    if convert_to_jpeg:
+        filename += '.jpg'
     with open(gcp_filename, 'a') as fd:
         print('%f %f %f %d %d %s' % (
-            lon, lat, height, x, y, os.path.basename(png_filename)),
+            lon, lat, height, x, y, filename),
             file=fd)
 
 
+# ---------------------------------------------------------------------
+def copy_image(filename, output_dir):
+    """ Copy the image into output_dir (if current dir different)
+    and convert to JPEG if required
+    """
+    if convert_to_jpeg:
+        img = Image.open(filename)
+        if img.mode != 'RGB':
+            img = img.convert('RGB')
+        img.save(os.path.join(output_dir, os.path.basename(filename) + '.jpg'), 'JPEG')
+    elif os.path.dirname(filename) != output_dir:
+        err("Copy (instead of convert to JPEG) is not yet implemented")
+
+
+# ---------------------------------------------------------------------
 if __name__ == '__main__':
 
     logging.basicConfig(level = logging.INFO)
@@ -206,7 +234,11 @@ if __name__ == '__main__':
         mp4_filename = sys.argv[1]
     if len(sys.argv) > 2:
         csv_filename = sys.argv[2]
-    gcp_filename = os.path.join(os.path.dirname(mp4_filename), 'gcp_list.txt')
+    if len(sys.argv) > 3:
+        output_dir = sys.argv[3]
+    if not os.path.isdir(output_dir):
+        err('Output directory does not exist: %s' % output_dir)
+    gcp_filename = os.path.join(output_dir, 'gcp_list.txt')
 
     # 1. Find a PNG file and get its dimensions, used later to calculate FOV
     png_filename = find_png_filename(mp4_filename)
@@ -246,6 +278,7 @@ if __name__ == '__main__':
         simple_dist_diff = sqrt(x*x + y*y) * earth_rad_m;
         if simple_dist_diff > 0.3 * fov_width:
             logging.info('keep %s' % png_filename)
+            copy_image(png_filename, output_dir)
             gcp_append(png_filename, lat, lon, height, png_width/2, png_height/2)
             prev_lat = lat
             prev_lon = lon

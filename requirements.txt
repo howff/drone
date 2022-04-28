@@ -1,3 +1,4 @@
 pypng
 gpxpy
 python-dateutil
+Pillow
