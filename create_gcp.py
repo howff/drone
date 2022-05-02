@@ -35,6 +35,7 @@ mp4_filename = '/mnt/hgfs/Downloads/Drone/Frames/DJI_0185.MP4'
 csv_filename = '/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-13_[15-20-46].csv'
 output_dir = '/mnt/hgfs/Downloads/Drone/FramesJPEG'
 convert_to_jpeg = True # OpenDroneMap needs JPEG not PNG
+fov_movement_factor = 0.3 # if drone moves > 0.3 of field of view then keep image
 
 # Constants
 projection = 'EPSG:4326'
@@ -276,7 +277,7 @@ if __name__ == '__main__':
         x = (radians(lon) - radians(prev_lon)) * cos((radians(lat)+radians(prev_lat))/2)
         y = (radians(lat) - radians(prev_lat))
         simple_dist_diff = sqrt(x*x + y*y) * earth_rad_m;
-        if simple_dist_diff > 0.3 * fov_width:
+        if simple_dist_diff > fov_movement_factor * fov_width:
             logging.info('keep %s' % png_filename)
             copy_image(png_filename, output_dir)
             gcp_append(png_filename, lat, lon, height, png_width/2, png_height/2)
