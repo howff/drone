@@ -36,6 +36,7 @@ csv_filename = '/mnt/hgfs/Downloads/Drone/SourceCopies/DJIFlightRecord_2022-04-1
 output_dir = '/mnt/hgfs/Downloads/Drone/FramesJPEG'
 convert_to_jpeg = True # OpenDroneMap needs JPEG not PNG
 fov_movement_factor = 0.3 # if drone moves > 0.3 of field of view then keep image
+gcp_is_geo = True # should write geo.txt not gcp_list.txt
 
 # Constants
 projection = 'EPSG:4326'
@@ -202,15 +203,22 @@ def gcp_header():
 def gcp_append(png_filename, lat, lon, height, x, y):
     """ Append the given coordinate to the gcp file.
     Create the file with a header if it doesn't exist.
+    Writes a geo.txt format is gcp_is_geo otherwise
+    writes a gcp_list.txt format (geo.txt is preferred).
     """
     gcp_header()
     filename = os.path.basename(png_filename)
     if convert_to_jpeg:
         filename += '.jpg'
     with open(gcp_filename, 'a') as fd:
-        print('%f %f %f %d %d %s' % (
-            lon, lat, height, x, y, filename),
-            file=fd)
+        if gcp_is_geo:
+            print('%f %f %f %d %d %s' % (
+                lon, lat, height, x, y, filename),
+                file=fd)
+        else:
+            print('%s %f %f %f' % (
+                filename, lon, lat, height),
+                file=fd)
 
 
 # ---------------------------------------------------------------------
@@ -239,7 +247,10 @@ if __name__ == '__main__':
         output_dir = sys.argv[3]
     if not os.path.isdir(output_dir):
         err('Output directory does not exist: %s' % output_dir)
-    gcp_filename = os.path.join(output_dir, 'gcp_list.txt')
+    if gcp_is_geo:
+        gcp_filename = os.path.join(output_dir, 'geo.txt')
+    else:
+        gcp_filename = os.path.join(output_dir, 'gcp_list.txt')
 
     # 1. Find a PNG file and get its dimensions, used later to calculate FOV
     png_filename = find_png_filename(mp4_filename)
